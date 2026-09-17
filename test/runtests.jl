@@ -29,6 +29,7 @@ const _SUITE_FILES = (
    ("Performance and Benchmarks", "test_performance.jl"),
    ("Robustness and Edge Cases", "test_robustness.jl"),
    ("Minimal Y-Bus Example", "test_minimal_example.jl"),
+   ("Germ, Transformers and PST", "test_transformers.jl"),
 )
 
 function _render_progress(done::Int, total::Int, label::AbstractString = "")
@@ -45,10 +46,22 @@ function _render_progress(done::Int, total::Int, label::AbstractString = "")
    flush(stdout)
 end
 
-_prev_print_enable = Test.TESTSET_PRINT_ENABLE[]
-Test.TESTSET_PRINT_ENABLE[] = false
+# Test.TESTSET_PRINT_ENABLE is a Ref up to Julia 1.12 and a ScopedValue from 1.13.
+function _run_quiet(f)
+   if Test.TESTSET_PRINT_ENABLE isa Base.RefValue
+      prev = Test.TESTSET_PRINT_ENABLE[]
+      Test.TESTSET_PRINT_ENABLE[] = false
+      try
+         return f()
+      finally
+         Test.TESTSET_PRINT_ENABLE[] = prev
+      end
+   else
+      return Base.ScopedValues.with(f, Test.TESTSET_PRINT_ENABLE => false)
+   end
+end
 
-test_results = try
+test_results = _run_quiet() do
    @testset "AnalyticLoadFlow.jl Complete Test Suite" begin
       total = length(_SUITE_FILES)
       _render_progress(0, total, "starting")
@@ -65,8 +78,6 @@ test_results = try
          _render_progress(idx, total, "$label done")
       end
    end
-finally
-   Test.TESTSET_PRINT_ENABLE[] = _prev_print_enable
 end
 
 print("\n")

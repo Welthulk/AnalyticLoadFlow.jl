@@ -11,9 +11,23 @@ Julia package implementing the Analytic Power Series Load Flow:
 
 - Sparse Y-Bus interface
 - PQ, PV and Slack buses
+- Transformers with ratio and phase shift (PST), regulated PST outer loop
 - Padé evaluation
 - Optional Newton-Raphson polish
+- MATPOWER case import (PEGASE-sized networks)
 - Open-source reference implementation
+
+## Notebooks (run in the browser)
+
+No installation required, the workshop notebooks run on Google Colab:
+
+| Notebook | Open |
+|---|---|
+| **Tour**: Y-bus data contract, series coefficients, Padé, germ variants, PV buses and Q limits, sparse path | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SOPTIM/AnalyticLoadFlow.jl/blob/main/notebooks/workshop_tour.ipynb) |
+| **Transformers and PST**: branch model, the two embeddings of theory Section 6.5 by hand, angle sweep, regulated PST | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SOPTIM/AnalyticLoadFlow.jl/blob/main/notebooks/workshop_pst.ipynb) |
+| **Large network**: PEGASE 2869 from a MATPOWER file, convention detection, timing, diagnostics | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SOPTIM/AnalyticLoadFlow.jl/blob/main/notebooks/workshop_large_network.ipynb) |
+
+See `notebooks/README.md`; the notebooks are generated from the Literate sources in `docs/lit/`.
 
 
 ## Project Status
@@ -35,8 +49,10 @@ The code is made available under the Apache-2.0 license. This does not imply any
 | Padé evaluation | Supported | used for series evaluation / analytical continuation |
 | 400 V LV PQ-only example | Included | synthetic educational radial street-feeder case |
 | Parametric tiled-grid scaling example | Included | synthetic one-voltage-level sparse Y-bus, configurable with `--buses=N`, includes timing output |
-| External case import | Not included | no MATPOWER/CGMES import workflow |
-| Transformer tap control / OLTC | Not included | no tap-control or voltage-regulator logic |
+| Transformers, phase shifters (PST) | Supported | complex tap `ratio·e^{jφ}`, non-symmetric Y-bus, both embeddings of theory Section 6.5 |
+| Regulated PST | Supported | outer loop on the angle to meet a branch active-power setpoint |
+| MATPOWER case import | Included | `.m` reader with detection of angle unit/sign and ratio convention; PEGASE 2869 example |
+| Transformer tap control / OLTC | Not included | no voltage-regulator logic |
 | Industrial support/productization | Not included | reference implementation only |
 
 ## Changelog
@@ -48,13 +64,14 @@ See CHANGELOG.md for notable user-visible changes.
 - APSLF solver core
 - Padé evaluation and stability indicator helpers
 - Internal Newton polish where used by the solver core
-- Self-contained Y-bus examples
+- Self-contained Y-bus examples, a PST example and a PEGASE-sized MATPOWER example
+- Colab notebooks
 - Theory article in `docs/src/theorie-eng.md`
 
 ## What is not included
 
 - Third-party network-framework integration
-- External case-file import workflow
+- CGMES or other network-model import (only the compact MATPOWER reader)
 - Benchmark or rescue suites
 - GUI, Web UI, or API service layer
 - Industrial support promise
@@ -94,6 +111,19 @@ julia --project=. examples/tiled_grid_scaling_demo.jl --buses=100 --samples=3
 ```
 
 The tiled-grid scaling example is synthetic educational data. It is useful for observing scaling behavior and timing on generated sparse Y-bus networks. It is not a benchmark suite and not a real grid model.
+
+The phase-shifting transformer example (angle sweep, both embeddings, regulated PST):
+
+```bash
+julia --project=. examples/pst_ybus_demo.jl --shift=10 --target=0.6
+```
+
+The large-network example downloads `case2869pegase.m` from the MATPOWER repository into `data/_downloaded/` (git-ignored) on first use and solves it with the sparse direct PV kernel in a fraction of a second:
+
+```bash
+julia --project=. examples/pegase_matpower_demo.jl
+julia --project=. examples/pegase_matpower_demo.jl --case=case1354pegase --qlimits
+```
 
 The reusable minimal integration template remains available for multiple cases:
 
@@ -145,7 +175,7 @@ res = solve_pf_apslf(
 ```
 
 
-APSLF uses the canonical analytic germ `V(s=0)=1∠0`. This is not a user-selectable Newton-style start value. If Newton polish is enabled, it starts from the APSLF solution.
+The germ, the order-0 state of the series, is chosen by the `germ` keyword (theory Section 6.5). The default `:deviation` keeps the flat germ and embeds the row sums of `Y` (line charging, bus shunts, transformer and PST terms) with the parameter `s`; `:noload` uses the linear no-load solution as germ. Both are exact, so pure APSLF is a load-flow solution without Newton polish; the legacy `:flat` germ on the full `Y` is not. The germ is not a Newton-style start value. If Newton polish is enabled, it starts from the APSLF solution.
 
 ## Theory
 
