@@ -20,7 +20,7 @@ version = "0.4.5"
 deps = ["LinearAlgebra", "Logging", "Printf", "SparseArrays"]
 path = ".."
 uuid = "19ecf91d-4042-490c-adc1-7fb0fdb392c0"
-version = "0.9.14"
+version = "0.9.15"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"

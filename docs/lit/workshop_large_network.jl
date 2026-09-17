@@ -35,7 +35,9 @@
 
 #nb # ## Setup (Colab)
 #nb # This cell installs AnalyticLoadFlow from GitHub (branch `main`) into a
-#nb # fresh temporary environment. Run it first, once per session.
+#nb # fresh temporary environment. Run it first, once per session. To test a
+#nb # branch, change `rev`. For a private checkout use a personal access token:
+#nb # `Pkg.add(url = "https://USER:TOKEN@github.com/USER/AnalyticLoadFlow.jl", rev = "main")`.
 #nb using Pkg
 #nb Pkg.activate(temp = true)
 #nb Pkg.add(url = "https://github.com/SOPTIM/AnalyticLoadFlow.jl", rev = "main")
