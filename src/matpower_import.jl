@@ -159,8 +159,7 @@ function matpower_case(
    slack == 0 && throw(ArgumentError("no slack bus (type 3) in $(path)"))
 
    has_gen = falses(nbus)
-   qlim_set = falses(nbus)
-   for r = 1:size(gen, 1)
+   for r in axes(gen, 1)
       gen[r, 8] > 0.0 || continue
       k = get(index_of, Int(gen[r, 1]), 0)
       k == 0 && continue
@@ -188,7 +187,7 @@ function matpower_case(
 
    function make_branches(unit::Symbol, sgn::Int, conv::Symbol)
       out = NamedTuple{(:i, :j, :r, :x, :b, :ratio, :shift_deg),Tuple{Int,Int,Float64,Float64,Float64,Float64,Float64}}[]
-      for r = 1:size(br, 1)
+      for r in axes(br, 1)
          br[r, 11] > 0.0 || continue
          i = get(index_of, Int(br[r, 1]), 0)
          j = get(index_of, Int(br[r, 2]), 0)
